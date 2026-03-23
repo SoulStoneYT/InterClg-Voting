@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { getElectionStatus } from "../services/electionService";
 
 export default function StartVoting() {
   const [loading, setLoading] = useState(false);
+  const [electionStatus, setElectionStatus] = useState(null); // eslint-disable-line no-unused-vars
+  const [checkingStatus, setCheckingStatus] = useState(true); // eslint-disable-line no-unused-vars
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,12 +45,27 @@ export default function StartVoting() {
         navigate("/complete-profile");
         return;
       }
+
+      // Check election status
+      try {
+        const electionData = await getElectionStatus();
+        setElectionStatus(electionData.electionStatus);
+      } catch (error) {
+        console.error("Error fetching election status:", error);
+      }
+      setCheckingStatus(false);
     };
 
     checkUserStatus();
   }, [navigate]);
 
   const handleStartVoting = async () => {
+    // Check if election is active before allowing to start
+    if (electionStatus !== "active") {
+      alert("Voting is not currently active. Please wait for the admin to start the election.");
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -69,6 +87,24 @@ export default function StartVoting() {
     }
   };
 
+  const getStatusMessage = () => {
+    if (checkingStatus) return null;
+    
+    switch (electionStatus) {
+      case "active":
+        return { color: "#28a745", bg: "#d4edda", text: "✅ Election is ACTIVE - You can start voting!" };
+      case "paused":
+        return { color: "#ffc107", bg: "#fff3cd", text: "⏸️ Election is PAUSED - Voting is temporarily disabled" };
+      case "ended":
+        return { color: "#dc3545", bg: "#f8d7da", text: "❌ Election has ENDED - Voting is closed" };
+      default:
+        return { color: "#6c757d", bg: "#f8f9fa", text: "⚪ Election has NOT STARTED - Please wait" };
+    }
+  };
+
+  const statusInfo = getStatusMessage();
+  const canVote = electionStatus === "active" && !loading;
+
   return (
     <div style={{ 
       display: "flex", 
@@ -85,16 +121,30 @@ export default function StartVoting() {
         You will have 10 minutes to complete your ballot.
       </p>
 
+      {statusInfo && (
+        <div style={{
+          color: statusInfo.color,
+          backgroundColor: statusInfo.bg,
+          padding: "12px 20px",
+          borderRadius: "5px",
+          marginBottom: "20px",
+          border: `1px solid ${statusInfo.color}`,
+          fontWeight: "500"
+        }}>
+          {statusInfo.text}
+        </div>
+      )}
+
       <button 
         onClick={handleStartVoting}
-        disabled={loading}
+        disabled={!canVote}
         style={{ 
           padding: "15px 40px", 
           fontSize: "18px",
-          backgroundColor: "#4CAF50", 
-          color: "white",
+          backgroundColor: canVote ? "#4CAF50" : "#cccccc", 
+          color: canVote ? "white" : "#666666",
           border: "none",
-          cursor: loading ? "not-allowed" : "pointer",
+          cursor: canVote ? "pointer" : "not-allowed",
           opacity: loading ? 0.7 : 1
         }}
       >

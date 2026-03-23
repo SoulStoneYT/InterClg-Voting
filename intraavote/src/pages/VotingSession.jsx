@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { db, auth } from "../firebase";
-import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const TOTAL_TIME = 600; // 10 minutes in seconds
@@ -12,7 +12,8 @@ export default function VotingSession() {
   const [remainingTime, setRemainingTime] = useState(TOTAL_TIME);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
   const navigate = useNavigate();
 
   // Prevent browser back navigation
@@ -24,6 +25,31 @@ export default function VotingSession() {
     window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", preventBack);
     return () => window.removeEventListener("popstate", preventBack);
+  }, []);
+
+  // Subscribe to election status changes in real-time
+  useEffect(() => {
+    const electionDocRef = doc(db, "settings", "election");
+    const unsubscribe = onSnapshot(electionDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const status = docSnap.data().electionStatus;
+        
+        // Handle pause immediately
+        if (status === "paused") {
+          setIsPaused(true);
+        } else if (status === "active") {
+          setIsPaused(false);
+        }
+        
+        // Handle end - but don't redirect immediately, let voters finish
+        if (status === "ended") {
+          setIsEnded(true);
+          // Don't set isPaused - voters should still be able to vote until timer expires
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Check user status and load positions
@@ -44,7 +70,6 @@ export default function VotingSession() {
       }
 
       const data = docSnap.data();
-      setUserData(data);
 
       // Security checks
       if (data.role === "admin") {
@@ -125,11 +150,14 @@ export default function VotingSession() {
     fetchCandidates();
   }, [currentIndex, positions]);
 
-  // Timer countdown
+  // Timer countdown - pauses when election is paused
   useEffect(() => {
     if (loading) return;
 
     const timer = setInterval(async () => {
+      // Skip countdown if paused
+      if (isPaused) return;
+
       setRemainingTime(prev => {
         if (prev <= 1) {
           clearInterval(timer);
@@ -152,10 +180,11 @@ export default function VotingSession() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [loading, navigate]);
+  }, [loading, navigate, isPaused]);
 
   const handleVote = useCallback(async (candidateId) => {
-    if (voting || positions.length === 0) return;
+    // Block voting only if paused (voting is allowed when ended until timer expires)
+    if (voting || positions.length === 0 || isPaused) return;
     
     setVoting(true);
     
@@ -198,7 +227,7 @@ export default function VotingSession() {
       alert("Failed to cast vote. Please try again.");
       setVoting(false);
     }
-  }, [voting, positions, currentIndex, navigate]);
+  }, [voting, positions, currentIndex, navigate, isPaused]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -230,8 +259,49 @@ export default function VotingSession() {
   const currentPosition = positions[currentIndex];
   const progress = ((currentIndex) / positions.length) * 100;
 
+  // Disable voting only when paused (voting is allowed when ended until timer expires)
+  const canVote = !isPaused;
+
   return (
     <div style={{ minHeight: "100vh", padding: "20px" }}>
+      {/* Pause Banner - Shows when election is paused */}
+      {isPaused && !isEnded && (
+        <div style={{
+          position: "fixed",
+          top: "50px",
+          left: 0,
+          right: 0,
+          backgroundColor: "#ffc107",
+          color: "#212529",
+          padding: "15px",
+          textAlign: "center",
+          fontSize: "18px",
+          fontWeight: "bold",
+          zIndex: 998
+        }}>
+          ⏸️ VOTING HAS BEEN PAUSED - You cannot vote right now. Please wait for the admin to resume.
+        </div>
+      )}
+
+      {/* Election Ended Banner - Shows when election has ended */}
+      {isEnded && (
+        <div style={{
+          position: "fixed",
+          top: "50px",
+          left: 0,
+          right: 0,
+          backgroundColor: "#fd7e14",
+          color: "white",
+          padding: "15px",
+          textAlign: "center",
+          fontSize: "16px",
+          fontWeight: "bold",
+          zIndex: 998
+        }}>
+          ⚠️ Election has ENDED - You can complete your current votes until your timer expires. No new votes will be accepted.
+        </div>
+      )}
+
       {/* Timer Display */}
       <div style={{ 
         position: "fixed", 
@@ -284,7 +354,8 @@ export default function VotingSession() {
                 padding: "20px",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center"
+                alignItems: "center",
+                opacity: canVote ? 1 : 0.6
               }}
             >
               <div>
@@ -297,14 +368,14 @@ export default function VotingSession() {
               </div>
               <button
                 onClick={() => handleVote(candidate.id)}
-                disabled={voting}
+                disabled={voting || !canVote}
                 style={{ 
                   padding: "10px 25px",
-                  backgroundColor: "#4CAF50",
+                  backgroundColor: canVote ? "#4CAF50" : "#cccccc",
                   color: "white",
                   border: "none",
                   borderRadius: "5px",
-                  cursor: voting ? "not-allowed" : "pointer",
+                  cursor: canVote ? "pointer" : "not-allowed",
                   opacity: voting ? 0.7 : 1,
                   fontSize: "16px"
                 }}
