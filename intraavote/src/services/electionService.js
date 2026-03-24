@@ -202,7 +202,10 @@ export const resetAllUserVotingStatus = async () => {
 
   for (const userDoc of usersSnapshot.docs) {
     batch.update(userDoc.ref, {
-      votedPositions: []
+      votedPositions: [],
+      votingSessionStarted: false,
+      votingSessionCompleted: false,
+      sessionStartTime: null
     });
     operationCount += 1;
     resetUsers += 1;
