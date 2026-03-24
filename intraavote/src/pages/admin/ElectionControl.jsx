@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import {
   startElection,
   pauseElection,
@@ -9,13 +9,15 @@ import {
   resetElection,
   initElectionSettings,
   publishResults,
-  ELECTION_DURATION_SECONDS
+  resetAllVotes,
+  resetAllUserVotingStatus,
+  fullTestingReset
 } from "../../services/electionService";
 import ElectionTimer from "../../components/ElectionTimer";
 
 export default function ElectionControl() {
   const [electionStatus, setElectionStatus] = useState("not_started");
-  const [electionEndTime, setElectionEndTime] = useState(null);
+  const [, setElectionEndTime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -143,6 +145,63 @@ export default function ElectionControl() {
     } catch (err) {
       setError(err.message);
     }
+    setProcessing(false);
+  };
+
+  const handleResetVotesOnly = async () => {
+    if (!window.confirm("Reset all voting results? This will delete all votes for testing.")) {
+      return;
+    }
+
+    setProcessing(true);
+    setError("");
+
+    try {
+      const { deletedVotes } = await resetAllVotes();
+      alert(`Reset complete. Deleted ${deletedVotes} vote records.`);
+    } catch (err) {
+      setError(err.message || "Failed to reset voting results");
+    }
+
+    setProcessing(false);
+  };
+
+  const handleResetUserVotingOnly = async () => {
+    if (!window.confirm("Reset all user voting status? This clears voted positions for every user.")) {
+      return;
+    }
+
+    setProcessing(true);
+    setError("");
+
+    try {
+      const { resetUsers } = await resetAllUserVotingStatus();
+      alert(`Reset complete. Cleared voting status for ${resetUsers} users.`);
+    } catch (err) {
+      setError(err.message || "Failed to reset user voting status");
+    }
+
+    setProcessing(false);
+  };
+
+  const handleFullTestingReset = async () => {
+    if (!window.confirm("Run FULL TEST RESET? This will clear votes, reset all user voting status, and reset election state.")) {
+      return;
+    }
+
+    setProcessing(true);
+    setError("");
+
+    try {
+      const { deletedVotes, resetUsers } = await fullTestingReset();
+      setResultsPublished(false);
+      alert(
+        `Full reset complete. Deleted ${deletedVotes} votes and reset ${resetUsers} users. Election status set to NOT STARTED.`
+      );
+    } catch (err) {
+      setError(err.message || "Failed to run full testing reset");
+    }
+
     setProcessing(false);
   };
 
@@ -346,6 +405,77 @@ export default function ElectionControl() {
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Testing Tools */}
+      <div
+        style={{
+          border: "1px solid #f5c06b",
+          borderRadius: "8px",
+          padding: "20px",
+          marginTop: "20px",
+          backgroundColor: "#2b1f0e"
+        }}
+      >
+        <h3 style={{ marginTop: 0, marginBottom: "10px", color: "#ffd36a" }}>
+          🧪 Temporary Testing Tools
+        </h3>
+        <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "14px", color: "#f8d89b" }}>
+          Use these admin-only actions to quickly reset data while testing.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <button
+            onClick={handleResetVotesOnly}
+            disabled={processing}
+            style={{
+              padding: "12px 18px",
+              fontSize: "15px",
+              backgroundColor: "#fd7e14",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: processing ? "not-allowed" : "pointer",
+              opacity: processing ? 0.7 : 1
+            }}
+          >
+            {processing ? "Processing..." : "Reset Voting Results (Delete Votes)"}
+          </button>
+
+          <button
+            onClick={handleResetUserVotingOnly}
+            disabled={processing}
+            style={{
+              padding: "12px 18px",
+              fontSize: "15px",
+              backgroundColor: "#20c997",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: processing ? "not-allowed" : "pointer",
+              opacity: processing ? 0.7 : 1
+            }}
+          >
+            {processing ? "Processing..." : "Reset User Voting Status"}
+          </button>
+
+          <button
+            onClick={handleFullTestingReset}
+            disabled={processing}
+            style={{
+              padding: "12px 18px",
+              fontSize: "15px",
+              backgroundColor: "#c82333",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: processing ? "not-allowed" : "pointer",
+              opacity: processing ? 0.7 : 1
+            }}
+          >
+            {processing ? "Processing..." : "Full Testing Reset (Votes + Users + Election)"}
+          </button>
         </div>
       </div>
 

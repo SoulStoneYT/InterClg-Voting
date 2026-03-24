@@ -1,5 +1,14 @@
 import { db } from "../firebase";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+  getDocs,
+  writeBatch
+} from "firebase/firestore";
 
 const ELECTION_DOC_ID = "election";
 export const ELECTION_DURATION_SECONDS = 2 * 60 * 60; // 2 hours in seconds
@@ -121,6 +130,7 @@ export const resetElection = async () => {
     startTime: null,
     endTime: null,
     electionEndTime: null,
+    resultsPublished: false,
     updatedAt: serverTimestamp()
   });
 
@@ -139,4 +149,91 @@ export const publishResults = async () => {
   });
 
   return true;
+};
+
+const BATCH_LIMIT = 450;
+
+/**
+ * Deletes all vote documents for testing reset
+ */
+export const resetAllVotes = async () => {
+  const votesSnapshot = await getDocs(collection(db, "votes"));
+
+  if (votesSnapshot.empty) {
+    return { deletedVotes: 0 };
+  }
+
+  let batch = writeBatch(db);
+  let operationCount = 0;
+  let deletedVotes = 0;
+
+  for (const voteDoc of votesSnapshot.docs) {
+    batch.delete(voteDoc.ref);
+    operationCount += 1;
+    deletedVotes += 1;
+
+    if (operationCount >= BATCH_LIMIT) {
+      await batch.commit();
+      batch = writeBatch(db);
+      operationCount = 0;
+    }
+  }
+
+  if (operationCount > 0) {
+    await batch.commit();
+  }
+
+  return { deletedVotes };
+};
+
+/**
+ * Clears votedPositions for all users so they can vote again during testing
+ */
+export const resetAllUserVotingStatus = async () => {
+  const usersSnapshot = await getDocs(collection(db, "users"));
+
+  if (usersSnapshot.empty) {
+    return { resetUsers: 0 };
+  }
+
+  let batch = writeBatch(db);
+  let operationCount = 0;
+  let resetUsers = 0;
+
+  for (const userDoc of usersSnapshot.docs) {
+    batch.update(userDoc.ref, {
+      votedPositions: []
+    });
+    operationCount += 1;
+    resetUsers += 1;
+
+    if (operationCount >= BATCH_LIMIT) {
+      await batch.commit();
+      batch = writeBatch(db);
+      operationCount = 0;
+    }
+  }
+
+  if (operationCount > 0) {
+    await batch.commit();
+  }
+
+  return { resetUsers };
+};
+
+/**
+ * Full testing reset: clears votes, resets user voting status, and resets election state
+ */
+export const fullTestingReset = async () => {
+  const [votesResult, usersResult] = await Promise.all([
+    resetAllVotes(),
+    resetAllUserVotingStatus()
+  ]);
+
+  await resetElection();
+
+  return {
+    deletedVotes: votesResult.deletedVotes,
+    resetUsers: usersResult.resetUsers
+  };
 };

@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase
 import ElectionControl from "./admin/ElectionControl";
 import ElectionTimer from "../components/ElectionTimer";
 import CandidateManagement from "./admin/CandidateManagement";
+import LiveVoteStats from "../components/LiveVoteStats";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -282,6 +283,9 @@ export default function Admin() {
         candidates={candidates}
         onRefresh={refreshData}
       />
+
+      {/* Live Vote Statistics */}
+      <LiveVoteStats positions={positions} candidates={candidates} />
 
       {/* Election Control Panel - Integrated Directly */}
       <ElectionControl />
