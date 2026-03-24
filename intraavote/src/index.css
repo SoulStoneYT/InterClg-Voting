@@ -179,3 +179,143 @@ button:focus-visible {
     color: rgba(0, 0, 0, 0.4);
   }
 }
+
+/* Candidate voting cards */
+.candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.candidate-card-container {
+  perspective: 1200px;
+  min-height: 420px;
+}
+
+.candidate-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+
+.candidate-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(170deg, rgba(34, 34, 34, 0.95), rgba(16, 16, 16, 0.95));
+  padding: 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+.card-info-btn {
+  align-self: flex-end;
+  border: none;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.card-photo-wrap {
+  width: 128px;
+  height: 128px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.24);
+}
+
+.card-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-name,
+.card-back-title {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+.card-party {
+  margin: 0;
+  color: #c7c7c7;
+  font-size: 0.92rem;
+}
+
+.card-back-label {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7ec8ff;
+}
+
+.card-motto {
+  margin: 0;
+  text-align: center;
+  color: #e8e8e8;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-vote-btn {
+  margin-top: auto;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #2fbf71, #179f58);
+}
+
+.card-vote-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  background: #6f6f6f;
+}
+
+@media (prefers-color-scheme: light) {
+  .card-face {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: linear-gradient(170deg, #ffffff, #f0f4f8);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-party,
+  .card-motto {
+    color: #475569;
+  }
+
+  .card-info-btn {
+    background: rgba(0, 0, 0, 0.08);
+  }
+}

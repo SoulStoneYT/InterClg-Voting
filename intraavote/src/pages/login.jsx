@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import ElectionTimer from "../components/ElectionTimer";
 
 const adminEmails = [
   "adityachaudhari237@nhitm.ac.in",
@@ -97,6 +98,11 @@ export default function Login() {
   return (
     <div className="login-container">
       <h2>IntraaVote Login</h2>
+      
+      {/* Main Election Timer */}
+      <div style={{ marginBottom: "20px" }}>
+        <ElectionTimer />
+      </div>
 
       <input
         placeholder="Full Name"

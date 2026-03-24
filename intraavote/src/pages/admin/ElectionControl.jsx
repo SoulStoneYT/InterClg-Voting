@@ -1,20 +1,25 @@
 import { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import {
   startElection,
   pauseElection,
   resumeElection,
   endElection,
   resetElection,
-  initElectionSettings
+  initElectionSettings,
+  publishResults,
+  ELECTION_DURATION_SECONDS
 } from "../../services/electionService";
+import ElectionTimer from "../../components/ElectionTimer";
 
 export default function ElectionControl() {
   const [electionStatus, setElectionStatus] = useState("not_started");
+  const [electionEndTime, setElectionEndTime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [resultsPublished, setResultsPublished] = useState(false);
 
   // Initialize settings and subscribe to real-time updates
   useEffect(() => {
@@ -25,9 +30,30 @@ export default function ElectionControl() {
 
         // Subscribe to real-time updates
         const electionDocRef = doc(db, "settings", "election");
-        const unsubscribe = onSnapshot(electionDocRef, (docSnap) => {
+        const unsubscribe = onSnapshot(electionDocRef, async (docSnap) => {
           if (docSnap.exists()) {
-            setElectionStatus(docSnap.data().electionStatus);
+            const data = docSnap.data();
+            setElectionStatus(data.electionStatus);
+            setResultsPublished(data.resultsPublished || false);
+            
+            if (data.electionEndTime) {
+              const endTime = typeof data.electionEndTime === 'string' 
+                ? new Date(data.electionEndTime) 
+                : data.electionEndTime.toDate ? data.electionEndTime.toDate() : new Date(data.electionEndTime);
+              setElectionEndTime(endTime);
+            }
+            
+            // Auto-end election if time has expired
+            if (data.electionStatus === "active" && data.electionEndTime) {
+              const now = new Date();
+              const endTimeDate = typeof data.electionEndTime === 'string' 
+                ? new Date(data.electionEndTime) 
+                : data.electionEndTime.toDate ? data.electionEndTime.toDate() : new Date(data.electionEndTime);
+              
+              if (now >= endTimeDate) {
+                await endElection();
+              }
+            }
           }
           setLoading(false);
         });
@@ -104,6 +130,22 @@ export default function ElectionControl() {
     setProcessing(false);
   };
 
+  const handlePublishResults = async () => {
+    if (!window.confirm("Are you sure you want to publish the results? This will make them visible to all voters.")) {
+      return;
+    }
+    setProcessing(true);
+    setError("");
+    try {
+      await publishResults();
+      setResultsPublished(true);
+      alert("Results published successfully!");
+    } catch (err) {
+      setError(err.message);
+    }
+    setProcessing(false);
+  };
+
   const getStatusBadge = () => {
     const statusConfig = {
       not_started: { color: "#6c757d", bg: "#f8f9fa", text: "NOT STARTED" },
@@ -154,9 +196,14 @@ export default function ElectionControl() {
         backgroundColor: "#000000"
       }}>
         <h3 style={{ marginTop: 0, marginBottom: "15px" }}>Current Status</h3>
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
           <span style={{ fontSize: "18px", fontWeight: "500" }}>Election:</span>
           {getStatusBadge()}
+        </div>
+        
+        {/* Main Election Timer */}
+        <div style={{ marginTop: "15px" }}>
+          <ElectionTimer />
         </div>
       </div>
 
@@ -264,22 +311,40 @@ export default function ElectionControl() {
 
           {/* Reset Button - Only for ended elections */}
           {electionStatus === "ended" && (
-            <button
-              onClick={handleReset}
-              disabled={processing}
-              style={{
-                padding: "15px 25px",
-                fontSize: "16px",
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: processing ? "not-allowed" : "pointer",
-                opacity: processing ? 0.7 : 1
-              }}
-            >
-              {processing ? "Processing..." : "Reset Election"}
-            </button>
+            <>
+              <button
+                onClick={handlePublishResults}
+                disabled={processing || resultsPublished}
+                style={{
+                  padding: "15px 25px",
+                  fontSize: "16px",
+                  backgroundColor: resultsPublished ? "#28a745" : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: processing ? "not-allowed" : "pointer",
+                  opacity: processing ? 0.7 : 1
+                }}
+              >
+                {resultsPublished ? "✓ Results Published" : "Publish Results"}
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={processing}
+                style={{
+                  padding: "15px 25px",
+                  fontSize: "16px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: processing ? "not-allowed" : "pointer",
+                  opacity: processing ? 0.7 : 1
+                }}
+              >
+                {processing ? "Processing..." : "Reset Election"}
+              </button>
+            </>
           )}
         </div>
       </div>

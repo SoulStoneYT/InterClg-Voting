@@ -3,6 +3,7 @@ import { db, auth } from "../firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { getElectionStatus } from "../services/electionService";
+import ElectionTimer from "../components/ElectionTimer";
 
 export default function StartVoting() {
   const [loading, setLoading] = useState(false);
@@ -115,6 +116,11 @@ export default function StartVoting() {
       textAlign: "center",
       padding: "20px"
     }}>
+      {/* Main Election Timer */}
+      <div style={{ marginBottom: "20px" }}>
+        <ElectionTimer />
+      </div>
+      
       <h2>Ready to Vote?</h2>
       <p style={{ fontSize: "18px", marginBottom: "30px" }}>
         Click Start to Begin Voting.<br />

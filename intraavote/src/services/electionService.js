@@ -2,6 +2,7 @@ import { db } from "../firebase";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 const ELECTION_DOC_ID = "election";
+export const ELECTION_DURATION_SECONDS = 2 * 60 * 60; // 2 hours in seconds
 
 /**
  * Initialize election settings document if it doesn't exist
@@ -15,6 +16,7 @@ export const initElectionSettings = async () => {
       electionStatus: "not_started",
       startTime: null,
       endTime: null,
+      electionEndTime: null,
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp()
     });
@@ -35,7 +37,8 @@ export const getElectionStatus = async () => {
     return {
       electionStatus: "not_started",
       startTime: null,
-      endTime: null
+      endTime: null,
+      electionEndTime: null
     };
   }
 
@@ -43,16 +46,21 @@ export const getElectionStatus = async () => {
 };
 
 /**
- * Start the election - sets status to "active"
+ * Start the election - sets status to "active" with 2-hour timer
  */
 export const startElection = async () => {
   const electionDocRef = doc(db, "settings", ELECTION_DOC_ID);
   
   await initElectionSettings();
   
+  // Calculate end time (2 hours from now)
+  const startTime = new Date();
+  const electionEndTime = new Date(startTime.getTime() + ELECTION_DURATION_SECONDS * 1000);
+  
   await updateDoc(electionDocRef, {
     electionStatus: "active",
     startTime: serverTimestamp(),
+    electionEndTime: electionEndTime.toISOString(),
     updatedAt: serverTimestamp()
   });
 
@@ -112,6 +120,21 @@ export const resetElection = async () => {
     electionStatus: "not_started",
     startTime: null,
     endTime: null,
+    electionEndTime: null,
+    updatedAt: serverTimestamp()
+  });
+
+  return true;
+};
+
+/**
+ * Publish results - marks results as published
+ */
+export const publishResults = async () => {
+  const electionDocRef = doc(db, "settings", ELECTION_DOC_ID);
+  
+  await updateDoc(electionDocRef, {
+    resultsPublished: true,
     updatedAt: serverTimestamp()
   });
 

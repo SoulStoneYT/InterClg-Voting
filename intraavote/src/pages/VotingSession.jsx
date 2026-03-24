@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { db, auth } from "../firebase";
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import ElectionTimer from "../components/ElectionTimer";
+import CandidateCard from "../components/CandidateCard";
 
 const TOTAL_TIME = 600; // 10 minutes in seconds
 
@@ -268,7 +270,7 @@ export default function VotingSession() {
       {isPaused && !isEnded && (
         <div style={{
           position: "fixed",
-          top: "50px",
+          top: "90px",
           left: 0,
           right: 0,
           backgroundColor: "#ffc107",
@@ -302,32 +304,49 @@ export default function VotingSession() {
         </div>
       )}
 
-      {/* Timer Display */}
+      {/* Main Election Timer - visible to everyone */}
       <div style={{ 
         position: "fixed", 
         top: 0, 
         left: 0, 
         right: 0, 
-        backgroundColor: remainingTime <= 60 ? "#f44336" : "#2196F3",
+        backgroundColor: "#2196F3",
         color: "white",
         padding: "10px",
         textAlign: "center",
-        fontSize: "20px",
+        fontSize: "18px",
         fontWeight: "bold",
         zIndex: 1000
       }}>
-        Time Remaining: {formatTime(remainingTime)}
+        <ElectionTimer compact />
+      </div>
+
+      {/* Individual Timer Display */}
+      <div style={{ 
+        position: "fixed", 
+        top: "50px", 
+        left: 0, 
+        right: 0, 
+        backgroundColor: remainingTime <= 60 ? "#f44336" : "#4CAF50",
+        color: "white",
+        padding: "8px",
+        textAlign: "center",
+        fontSize: "16px",
+        fontWeight: "bold",
+        zIndex: 999
+      }}>
+        Your Time: {formatTime(remainingTime)}
       </div>
 
       {/* Progress Bar */}
       <div style={{ 
         position: "fixed", 
-        top: "45px", 
+        top: "80px", 
         left: 0, 
         right: 0, 
         height: "5px", 
         backgroundColor: "#ddd",
-        zIndex: 999 
+        zIndex: 998 
       }}>
         <div style={{ 
           height: "100%", 
@@ -337,52 +356,22 @@ export default function VotingSession() {
         }} />
       </div>
 
-      <div style={{ marginTop: "100px", maxWidth: "600px", margin: "100px auto 20px" }}>
+      <div style={{ marginTop: "100px", maxWidth: "1100px", margin: "100px auto 20px" }}>
         {/* Position Name at Top */}
         <div style={{ textAlign: "center", marginBottom: "30px", paddingTop: "10px" }}>
           <h2 style={{ margin: 0 }}>{currentPosition?.title}</h2>
         </div>
 
-        {/* Candidates List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        {/* Candidates Cards */}
+        <div className="candidate-grid" style={{ opacity: canVote ? 1 : 0.7 }}>
           {candidates.map((candidate) => (
-            <div 
+            <CandidateCard
               key={candidate.id}
-              style={{ 
-                border: "1px solid #ddd", 
-                borderRadius: "8px",
-                padding: "20px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                opacity: canVote ? 1 : 0.6
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0 }}>{candidate.name}</h3>
-                {candidate.party && (
-                  <p style={{ margin: "5px 0 0 0", color: "#666" }}>
-                    {candidate.party}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => handleVote(candidate.id)}
-                disabled={voting || !canVote}
-                style={{ 
-                  padding: "10px 25px",
-                  backgroundColor: canVote ? "#4CAF50" : "#cccccc",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: canVote ? "pointer" : "not-allowed",
-                  opacity: voting ? 0.7 : 1,
-                  fontSize: "16px"
-                }}
-              >
-                Vote
-              </button>
-            </div>
+              candidate={candidate}
+              onVote={handleVote}
+              canVote={canVote}
+              voting={voting}
+            />
           ))}
         </div>
 
