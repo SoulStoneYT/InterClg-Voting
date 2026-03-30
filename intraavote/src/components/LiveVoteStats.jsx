@@ -70,15 +70,8 @@ export default function LiveVoteStats({ positions = [], candidates = [] }) {
   const totalVotesOverall = votes.length;
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto 30px auto" }}>
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "20px",
-          backgroundColor: "#000000"
-        }}
-      >
+    <section className="admin-section">
+      <div className="admin-card">
         <div
           style={{
             display: "flex",
@@ -146,6 +139,6 @@ export default function LiveVoteStats({ positions = [], candidates = [] }) {
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

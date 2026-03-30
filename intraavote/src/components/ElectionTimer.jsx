@@ -9,22 +9,32 @@ export default function ElectionTimer({ compact = false, showLabel = true }) {
 
   useEffect(() => {
     const electionDocRef = doc(db, "settings", "election");
-    const unsubscribe = onSnapshot(electionDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setElectionStatus(data.electionStatus);
-        
-        if (data.electionEndTime) {
-          // Handle both string and Date formats
-          const endTime = typeof data.electionEndTime === 'string' 
-            ? new Date(data.electionEndTime) 
-            : data.electionEndTime.toDate();
-          setElectionEndTime(endTime);
-        } else {
-          setElectionEndTime(null);
+    const unsubscribe = onSnapshot(
+      electionDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setElectionStatus(data.electionStatus);
+
+          if (data.electionEndTime) {
+            // Handle both string and Date formats
+            const endTime = typeof data.electionEndTime === 'string' 
+              ? new Date(data.electionEndTime) 
+              : data.electionEndTime.toDate();
+            setElectionEndTime(endTime);
+          } else {
+            setElectionEndTime(null);
+          }
         }
+      },
+      (error) => {
+        if (error.code !== "permission-denied" && error.code !== "unavailable" && error.code !== "network-request-failed") {
+          console.error("ElectionTimer Firestore snapshot error:", error);
+        }
+        setElectionStatus(null);
+        setElectionEndTime(null);
       }
-    });
+    );
 
     return () => unsubscribe();
   }, []);

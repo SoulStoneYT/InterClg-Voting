@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const departments = [
@@ -68,10 +68,10 @@ export default function CompleteProfile() {
 
       const docRef = doc(db, "users", user.uid);
       
-      // Convert date string to Firestore Timestamp
+      // Convert date string to Date object for Firestore
       const dobTimestamp = new Date(dob);
       
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         department: department,
         year: year,
         dob: dobTimestamp,
@@ -79,7 +79,7 @@ export default function CompleteProfile() {
         votingSessionCompleted: false,
         sessionStartTime: null,
         votedPositions: []
-      });
+      }, { merge: true });
 
       navigate("/start-voting");
     } catch (error) {

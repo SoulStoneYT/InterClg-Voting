@@ -239,21 +239,15 @@ export default function ElectionControl() {
   }
 
   return (
-    <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ marginBottom: "30px" }}>
-        <h2>Election Control Panel</h2>
-        <p>Manage the election status and voting accessibility</p>
+    <section className="admin-section">
+      <div className="admin-section-header">
+        <div>
+          <h3 className="admin-section-title">Election Control Panel</h3>
+          <p style={{ margin: "0.6rem 0 0", color: "#546c8d" }}>Manage the election status and voting accessibility</p>
+        </div>
       </div>
 
-      {/* Status Display */}
-      <div style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "20px",
-        marginBottom: "30px",
-        backgroundColor: "#000000"
-      }}>
+      <div className="admin-card">
         <h3 style={{ marginTop: 0, marginBottom: "15px" }}>Current Status</h3>
         <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
           <span style={{ fontSize: "18px", fontWeight: "500" }}>Election:</span>
@@ -268,42 +262,21 @@ export default function ElectionControl() {
 
       {/* Error Message */}
       {error && (
-        <div style={{
-          color: "#dc3545",
-          backgroundColor: "#f8d7da",
-          border: "1px solid #f5c6cb",
-          borderRadius: "4px",
-          padding: "12px",
-          marginBottom: "20px"
-        }}>
+        <div className="admin-alert admin-alert--error">
           {error}
         </div>
       )}
 
-      {/* Control Buttons */}
-      <div style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "20px"
-      }}>
+      <div className="admin-card admin-panel-controls">
         <h3 style={{ marginTop: 0, marginBottom: "20px" }}>Control Actions</h3>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        <div className="control-grid">
           {/* Start Button */}
           {electionStatus === "not_started" && (
             <button
               onClick={handleStart}
               disabled={processing}
-              style={{
-                padding: "15px 25px",
-                fontSize: "16px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: processing ? "not-allowed" : "pointer",
-                opacity: processing ? 0.7 : 1
-              }}
+              className="admin-btn primary"
             >
               {processing ? "Processing..." : "Start Election"}
             </button>
@@ -314,16 +287,7 @@ export default function ElectionControl() {
             <button
               onClick={handlePause}
               disabled={processing}
-              style={{
-                padding: "15px 25px",
-                fontSize: "16px",
-                backgroundColor: "#ffc107",
-                color: "#212529",
-                border: "none",
-                borderRadius: "5px",
-                cursor: processing ? "not-allowed" : "pointer",
-                opacity: processing ? 0.7 : 1
-              }}
+              className="admin-btn secondary"
             >
               {processing ? "Processing..." : "Pause Election"}
             </button>
@@ -333,16 +297,7 @@ export default function ElectionControl() {
             <button
               onClick={handleResume}
               disabled={processing}
-              style={{
-                padding: "15px 25px",
-                fontSize: "16px",
-                backgroundColor: "#17a2b8",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: processing ? "not-allowed" : "pointer",
-                opacity: processing ? 0.7 : 1
-              }}
+              className="admin-btn primary"
             >
               {processing ? "Processing..." : "Resume Election"}
             </button>
@@ -353,16 +308,7 @@ export default function ElectionControl() {
             <button
               onClick={handleEnd}
               disabled={processing}
-              style={{
-                padding: "15px 25px",
-                fontSize: "16px",
-                backgroundColor: "#dc3545",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: processing ? "not-allowed" : "pointer",
-                opacity: processing ? 0.7 : 1
-              }}
+              className="admin-btn danger"
             >
               {processing ? "Processing..." : "End Election"}
             </button>
@@ -374,32 +320,14 @@ export default function ElectionControl() {
               <button
                 onClick={handlePublishResults}
                 disabled={processing || resultsPublished}
-                style={{
-                  padding: "15px 25px",
-                  fontSize: "16px",
-                  backgroundColor: resultsPublished ? "#28a745" : "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: processing ? "not-allowed" : "pointer",
-                  opacity: processing ? 0.7 : 1
-                }}
+                className="admin-btn primary"
               >
                 {resultsPublished ? "✓ Results Published" : "Publish Results"}
               </button>
               <button
                 onClick={handleReset}
                 disabled={processing}
-                style={{
-                  padding: "15px 25px",
-                  fontSize: "16px",
-                  backgroundColor: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: processing ? "not-allowed" : "pointer",
-                  opacity: processing ? 0.7 : 1
-                }}
+                className="admin-btn tertiary"
               >
                 {processing ? "Processing..." : "Reset Election"}
               </button>
@@ -409,15 +337,7 @@ export default function ElectionControl() {
       </div>
 
       {/* Testing Tools */}
-      <div
-        style={{
-          border: "1px solid #f5c06b",
-          borderRadius: "8px",
-          padding: "20px",
-          marginTop: "20px",
-          backgroundColor: "#2b1f0e"
-        }}
-      >
+      <div className="admin-card admin-card--warning">
         <h3 style={{ marginTop: 0, marginBottom: "10px", color: "#ffd36a" }}>
           🧪 Temporary Testing Tools
         </h3>
@@ -429,16 +349,7 @@ export default function ElectionControl() {
           <button
             onClick={handleResetVotesOnly}
             disabled={processing}
-            style={{
-              padding: "12px 18px",
-              fontSize: "15px",
-              backgroundColor: "#fd7e14",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: processing ? "not-allowed" : "pointer",
-              opacity: processing ? 0.7 : 1
-            }}
+            className="admin-btn secondary"
           >
             {processing ? "Processing..." : "Reset Voting Results (Delete Votes)"}
           </button>
@@ -446,16 +357,7 @@ export default function ElectionControl() {
           <button
             onClick={handleResetUserVotingOnly}
             disabled={processing}
-            style={{
-              padding: "12px 18px",
-              fontSize: "15px",
-              backgroundColor: "#20c997",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: processing ? "not-allowed" : "pointer",
-              opacity: processing ? 0.7 : 1
-            }}
+            className="admin-btn primary"
           >
             {processing ? "Processing..." : "Reset User Voting Status"}
           </button>
@@ -463,16 +365,7 @@ export default function ElectionControl() {
           <button
             onClick={handleFullTestingReset}
             disabled={processing}
-            style={{
-              padding: "12px 18px",
-              fontSize: "15px",
-              backgroundColor: "#c82333",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: processing ? "not-allowed" : "pointer",
-              opacity: processing ? 0.7 : 1
-            }}
+            className="admin-btn danger"
           >
             {processing ? "Processing..." : "Full Testing Reset (Votes + Users + Election)"}
           </button>
@@ -480,14 +373,7 @@ export default function ElectionControl() {
       </div>
 
       {/* Status Info */}
-      <div style={{
-        marginTop: "30px",
-        padding: "15px",
-        backgroundColor: "#e7f3ff",
-        borderRadius: "8px",
-        fontSize: "14px",
-        color: "#495057"
-      }}>
+      <div className="admin-card admin-card--info">
         <strong>Status Guide:</strong>
         <ul style={{ marginTop: "10px", paddingLeft: "20px" }}>
           <li><strong>NOT STARTED</strong> - Voters cannot start voting</li>
@@ -496,6 +382,6 @@ export default function ElectionControl() {
           <li><strong>ENDED</strong> - Voting is closed permanently</li>
         </ul>
       </div>
-    </div>
+    </section>
   );
 }
