@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import useNotification from "../hooks/useNotification";
 
 const adminEmails = [
   "adityachaudhari237@nhitm.ac.in",
@@ -20,23 +21,24 @@ export default function Login() {
   const [email, setEmail] = useState("");
 
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const isOnline = () => typeof navigator !== "undefined" ? navigator.onLine : true;
 
-  const fallbackRedirect = (user) => {
+  const fallbackRedirect = useCallback((user) => {
     if (user?.email && adminEmails.includes(user.email)) {
       navigate("/admin");
     } else {
       navigate("/complete-profile");
     }
-  };
+  }, [navigate]);
 
   // Auto login session detection with role-based redirect
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         if (!isOnline()) {
-          alert("You are offline. Please connect to the internet and reload the page.");
+          showNotification("You are offline. Please connect to the internet and reload the page.", "warning");
           return;
         }
 
@@ -74,12 +76,12 @@ export default function Login() {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [fallbackRedirect, navigate, showNotification]);
 
   const redirectUser = async (user) => {
     if (!user) return false;
     if (!isOnline()) {
-      alert("You are offline. Login succeeded, but we cannot fetch your profile until you reconnect.");
+      showNotification("You are offline. Login succeeded, but we cannot fetch your profile until you reconnect.", "warning");
       return false;
     }
 
@@ -116,18 +118,18 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!name || !enrollment || !email) {
-      alert("All fields required");
+      showNotification("All fields required", "warning");
       return;
     }
 
     // College domain restriction
     if (!email.endsWith("@nhitm.ac.in")) {
-      alert("Only official college email IDs allowed.");
+      showNotification("Only official college email IDs allowed.", "warning");
       return;
     }
 
     if (!isOnline()) {
-      alert("You are offline. Please connect to the internet before logging in.");
+      showNotification("You are offline. Please connect to the internet before logging in.", "warning");
       return;
     }
 
@@ -137,7 +139,7 @@ export default function Login() {
       userCredential = await signInWithEmailAndPassword(auth, email, enrollment);
     } catch (signInError) {
       if (signInError.code === "auth/network-request-failed") {
-        alert("Network error during login. Please check your internet connection.");
+        showNotification("Network error during login. Please check your internet connection.", "error");
         return;
       }
 
@@ -160,7 +162,7 @@ export default function Login() {
           votedPositions: []
         });
       } catch (createError) {
-        alert(createError.message);
+        showNotification(createError.message, "error");
         return;
       }
     }
@@ -168,7 +170,7 @@ export default function Login() {
     if (userCredential?.user) {
       await redirectUser(userCredential.user);
     } else {
-      alert("Login failed. Please try again.");
+      showNotification("Login failed. Please try again.", "error");
     }
   };
 

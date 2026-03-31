@@ -3,12 +3,14 @@ import { db, auth } from "../firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import ElectionTimer from "../components/ElectionTimer";
+import useNotification from "../hooks/useNotification";
 
 export default function StartVoting() {
   const [loading, setLoading] = useState(false);
-  const [electionStatus, setElectionStatus] = useState(null); // eslint-disable-line no-unused-vars
-  const [checkingStatus, setCheckingStatus] = useState(true); // eslint-disable-line no-unused-vars
+  const [electionStatus, setElectionStatus] = useState(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     let unsubscribeElection = null;
@@ -81,7 +83,7 @@ export default function StartVoting() {
   const handleStartVoting = async () => {
     // Check if election is active before allowing to start
     if (electionStatus !== "active") {
-      alert("Voting is not currently active. Please wait for the admin to start the election.");
+      showNotification("Voting is not currently active. Please wait for the admin to start the election.", "warning");
       return;
     }
 
@@ -101,7 +103,7 @@ export default function StartVoting() {
       navigate("/voting-session");
     } catch (error) {
       console.error("Error starting voting session:", error);
-      alert("Failed to start voting session. Please try again.");
+      showNotification("Failed to start voting session. Please try again.", "error");
       setLoading(false);
     }
   };

@@ -7,9 +7,13 @@ import ElectionControl from "./admin/ElectionControl";
 import ElectionTimer from "../components/ElectionTimer";
 import CandidateManagement from "./admin/CandidateManagement";
 import LiveVoteStats from "../components/LiveVoteStats";
+import useNotification from "../hooks/useNotification";
+import useConfirm from "../hooks/useConfirm";
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
+  const { showConfirm } = useConfirm();
   const [positions, setPositions] = useState([]);
   const [candidates, setCandidates] = useState([]);
   const [newPositionTitle, setNewPositionTitle] = useState("");
@@ -70,7 +74,7 @@ export default function Admin() {
 
   const handleAddPosition = async () => {
     if (!newPositionTitle.trim()) {
-      alert("Please enter a position title");
+      showNotification("Please enter a position title", "warning");
       return;
     }
 
@@ -85,7 +89,7 @@ export default function Admin() {
       refreshData();
     } catch (error) {
       console.error("Error adding position:", error);
-      alert("Failed to add position");
+      showNotification("Failed to add position", "error");
     }
   };
 
@@ -101,7 +105,12 @@ export default function Admin() {
   };
 
   const handleDeletePosition = async (positionId) => {
-    if (!window.confirm("Are you sure you want to delete this position?")) {
+    const confirmed = await showConfirm("Are you sure you want to delete this position?", {
+      title: "Delete Position",
+      confirmText: "Delete"
+    });
+
+    if (!confirmed) {
       return;
     }
 

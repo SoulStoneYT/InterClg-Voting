@@ -9,10 +9,12 @@ import {
   getDoc
 } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
+import useNotification from "../hooks/useNotification";
 
 export default function Candidates() {
   const { id } = useParams(); // position id
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const [candidates, setCandidates] = useState([]);
   const [alreadyVoted, setAlreadyVoted] = useState(false);
@@ -52,7 +54,7 @@ export default function Candidates() {
     if (!user) return;
 
     if (alreadyVoted) {
-      alert("You have already voted for this position.");
+      showNotification("You have already voted for this position.", "warning");
       return;
     }
 
@@ -75,10 +77,10 @@ export default function Candidates() {
       });
 
       setAlreadyVoted(true);
-      alert("Vote recorded successfully!");
+      showNotification("Vote recorded successfully!", "success");
 
     } catch (error) {
-      alert(error.message);
+      showNotification(error.message, "error");
     }
   };
 

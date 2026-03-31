@@ -15,6 +15,8 @@ import {
 } from "../../services/electionService";
 import { sendResultsAnnouncementEmails } from "../../services/emailService";
 import ElectionTimer from "../../components/ElectionTimer";
+import useNotification from "../../hooks/useNotification";
+import useConfirm from "../../hooks/useConfirm";
 
 export default function ElectionControl() {
   const [electionStatus, setElectionStatus] = useState("not_started");
@@ -23,6 +25,8 @@ export default function ElectionControl() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [resultsPublished, setResultsPublished] = useState(false);
+  const { showNotification } = useNotification();
+  const { showConfirm } = useConfirm();
 
   // Initialize settings and subscribe to real-time updates
   useEffect(() => {
@@ -106,7 +110,12 @@ export default function ElectionControl() {
   };
 
   const handleEnd = async () => {
-    if (!window.confirm("Are you sure you want to end the election? This action cannot be undone.")) {
+    const confirmed = await showConfirm("Are you sure you want to end the election? This action cannot be undone.", {
+      title: "End Election",
+      confirmText: "End Election"
+    });
+
+    if (!confirmed) {
       return;
     }
     setProcessing(true);
@@ -120,7 +129,12 @@ export default function ElectionControl() {
   };
 
   const handleReset = async () => {
-    if (!window.confirm("Are you sure you want to reset the election? This will clear all timing data.")) {
+    const confirmed = await showConfirm("Are you sure you want to reset the election? This will clear all timing data.", {
+      title: "Reset Election",
+      confirmText: "Reset"
+    });
+
+    if (!confirmed) {
       return;
     }
     setProcessing(true);
@@ -134,7 +148,12 @@ export default function ElectionControl() {
   };
 
   const handlePublishResults = async () => {
-    if (!window.confirm("Are you sure you want to publish the results? This will make them visible to all voters.")) {
+    const confirmed = await showConfirm("Are you sure you want to publish the results? This will make them visible to all voters.", {
+      title: "Publish Results",
+      confirmText: "Publish"
+    });
+
+    if (!confirmed) {
       return;
     }
     setProcessing(true);
@@ -147,13 +166,15 @@ export default function ElectionControl() {
       const { sent, failed, total, failedReasons } = await sendResultsAnnouncementEmails(resultsLink);
 
       if (failed > 0) {
-        alert(
+        showNotification(
           `Results published successfully! Email summary: ${sent}/${total} sent, ${failed} failed.${
             failedReasons?.[0] ? `\nFirst error: ${failedReasons[0]}` : ""
-          }`
+          }`,
+          "warning",
+          7000
         );
       } else {
-        alert(`Results published and email sent to ${sent} voters.`);
+        showNotification(`Results published and email sent to ${sent} voters.`, "success");
       }
     } catch (err) {
       setError(err.message);
@@ -162,7 +183,12 @@ export default function ElectionControl() {
   };
 
   const handleResetVotesOnly = async () => {
-    if (!window.confirm("Reset all voting results? This will delete all votes for testing.")) {
+    const confirmed = await showConfirm("Reset all voting results? This will delete all votes for testing.", {
+      title: "Reset Votes",
+      confirmText: "Reset Votes"
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -171,7 +197,7 @@ export default function ElectionControl() {
 
     try {
       const { deletedVotes } = await resetAllVotes();
-      alert(`Reset complete. Deleted ${deletedVotes} vote records.`);
+      showNotification(`Reset complete. Deleted ${deletedVotes} vote records.`, "info");
     } catch (err) {
       setError(err.message || "Failed to reset voting results");
     }
@@ -180,7 +206,12 @@ export default function ElectionControl() {
   };
 
   const handleResetUserVotingOnly = async () => {
-    if (!window.confirm("Reset all user voting status? This clears voted positions for every user.")) {
+    const confirmed = await showConfirm("Reset all user voting status? This clears voted positions for every user.", {
+      title: "Reset User Voting Status",
+      confirmText: "Reset Users"
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -189,7 +220,7 @@ export default function ElectionControl() {
 
     try {
       const { resetUsers } = await resetAllUserVotingStatus();
-      alert(`Reset complete. Cleared voting status for ${resetUsers} users.`);
+      showNotification(`Reset complete. Cleared voting status for ${resetUsers} users.`, "info");
     } catch (err) {
       setError(err.message || "Failed to reset user voting status");
     }
@@ -198,7 +229,12 @@ export default function ElectionControl() {
   };
 
   const handleFullTestingReset = async () => {
-    if (!window.confirm("Run FULL TEST RESET? This will clear votes, reset all user voting status, and reset election state.")) {
+    const confirmed = await showConfirm("Run FULL TEST RESET? This will clear votes, reset all user voting status, and reset election state.", {
+      title: "Full Testing Reset",
+      confirmText: "Run Reset"
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -208,8 +244,10 @@ export default function ElectionControl() {
     try {
       const { deletedVotes, resetUsers } = await fullTestingReset();
       setResultsPublished(false);
-      alert(
-        `Full reset complete. Deleted ${deletedVotes} votes and reset ${resetUsers} users. Election status set to NOT STARTED.`
+      showNotification(
+        `Full reset complete. Deleted ${deletedVotes} votes and reset ${resetUsers} users. Election status set to NOT STARTED.`,
+        "info",
+        6000
       );
     } catch (err) {
       setError(err.message || "Failed to run full testing reset");

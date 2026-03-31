@@ -2,6 +2,8 @@ import { useState } from "react";
 import { db } from "../../firebase";
 import { addDoc, deleteDoc, doc } from "firebase/firestore";
 import { collection } from "firebase/firestore";
+import useNotification from "../../hooks/useNotification";
+import useConfirm from "../../hooks/useConfirm";
 
 export default function CandidateManagement({ positions, candidates, onRefresh }) {
   const [showCandidateForm, setShowCandidateForm] = useState(false);
@@ -10,14 +12,16 @@ export default function CandidateManagement({ positions, candidates, onRefresh }
   const [newCandidateParty, setNewCandidateParty] = useState("");
   const [newCandidatePhoto, setNewCandidatePhoto] = useState("");
   const [newCandidateMotto, setNewCandidateMotto] = useState("");
+  const { showNotification } = useNotification();
+  const { showConfirm } = useConfirm();
 
   const handleAddCandidate = async () => {
     if (!selectedPosition) {
-      alert("Please select a position");
+      showNotification("Please select a position", "warning");
       return;
     }
     if (!newCandidateName.trim()) {
-      alert("Please enter a candidate name");
+      showNotification("Please enter a candidate name", "warning");
       return;
     }
 
@@ -39,12 +43,17 @@ export default function CandidateManagement({ positions, candidates, onRefresh }
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error("Error adding candidate:", error);
-      alert("Failed to add candidate");
+      showNotification("Failed to add candidate", "error");
     }
   };
 
   const handleDeleteCandidate = async (candidateId) => {
-    if (!window.confirm("Are you sure you want to delete this candidate?")) {
+    const confirmed = await showConfirm("Are you sure you want to delete this candidate?", {
+      title: "Delete Candidate",
+      confirmText: "Delete"
+    });
+
+    if (!confirmed) {
       return;
     }
 

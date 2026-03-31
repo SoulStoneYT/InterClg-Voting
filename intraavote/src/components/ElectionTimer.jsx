@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 
 export default function ElectionTimer({ compact = false, showLabel = true }) {
   const [electionEndTime, setElectionEndTime] = useState(null);
   const [electionStatus, setElectionStatus] = useState(null);
-  const [remainingSeconds, setRemainingSeconds] = useState(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     const electionDocRef = doc(db, "settings", "election");
@@ -39,29 +39,25 @@ export default function ElectionTimer({ compact = false, showLabel = true }) {
     return () => unsubscribe();
   }, []);
 
-  // Update countdown every second
+  // Update timer tick while election is active
   useEffect(() => {
     if (!electionEndTime || electionStatus !== "active") {
-      setRemainingSeconds(null);
       return;
     }
 
-    const updateTimer = () => {
-      const now = new Date();
-      const diff = Math.floor((electionEndTime - now) / 1000);
-      
-      if (diff <= 0) {
-        setRemainingSeconds(0);
-      } else {
-        setRemainingSeconds(diff);
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    const interval = setInterval(() => setTick(Date.now()), 1000);
     
     return () => clearInterval(interval);
   }, [electionEndTime, electionStatus]);
+
+  const remainingSeconds = useMemo(() => {
+    if (!electionEndTime || electionStatus !== "active") {
+      return null;
+    }
+
+    const diff = Math.floor((electionEndTime.getTime() - tick) / 1000);
+    return diff <= 0 ? 0 : diff;
+  }, [electionEndTime, electionStatus, tick]);
 
   const formatTime = (seconds) => {
     if (seconds === null || seconds === undefined) return "--:--:--";

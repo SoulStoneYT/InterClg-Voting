@@ -4,6 +4,7 @@ import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs, onSn
 import { useNavigate } from "react-router-dom";
 import ElectionTimer from "../components/ElectionTimer";
 import CandidateCard from "../components/CandidateCard";
+import useNotification from "../hooks/useNotification";
 
 const TOTAL_TIME = 600; // 10 minutes in seconds
 
@@ -17,6 +18,7 @@ export default function VotingSession() {
   const [isPaused, setIsPaused] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   // Prevent browser back navigation
   useEffect(() => {
@@ -226,10 +228,10 @@ export default function VotingSession() {
       }
     } catch (error) {
       console.error("Error casting vote:", error);
-      alert("Failed to cast vote. Please try again.");
+      showNotification("Failed to cast vote. Please try again.", "error");
       setVoting(false);
     }
-  }, [voting, positions, currentIndex, navigate, isPaused]);
+  }, [voting, positions, currentIndex, navigate, isPaused, showNotification]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);

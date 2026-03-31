@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import useNotification from "../hooks/useNotification";
 
 const departments = [
   "Computer Science",
@@ -25,6 +26,7 @@ export default function CompleteProfile() {
   const [dob, setDob] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const checkUserProfile = async () => {
@@ -58,7 +60,7 @@ export default function CompleteProfile() {
     e.preventDefault();
     
     if (!department || !year || !dob) {
-      alert("Please fill all fields");
+      showNotification("Please fill all fields", "warning");
       return;
     }
 
@@ -84,7 +86,7 @@ export default function CompleteProfile() {
       navigate("/start-voting");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      showNotification("Failed to update profile. Please try again.", "error");
     }
   };
 
