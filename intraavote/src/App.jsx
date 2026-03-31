@@ -8,6 +8,7 @@ import AlreadyVoted from "./pages/AlreadyVoted";
 import CompleteProfile from "./pages/CompleteProfile";
 import StartVoting from "./pages/StartVoting";
 import VotingSession from "./pages/VotingSession";
+import Results from "./pages/Results";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/start-voting" element={<StartVoting />} />
       <Route path="/voting-session" element={<VotingSession />} />
+      <Route path="/results" element={<Results />} />
     </Routes>
   );
 }

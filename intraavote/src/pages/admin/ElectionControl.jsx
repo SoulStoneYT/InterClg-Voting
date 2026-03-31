@@ -13,6 +13,7 @@ import {
   resetAllUserVotingStatus,
   fullTestingReset
 } from "../../services/electionService";
+import { sendResultsAnnouncementEmails } from "../../services/emailService";
 import ElectionTimer from "../../components/ElectionTimer";
 
 export default function ElectionControl() {
@@ -141,7 +142,19 @@ export default function ElectionControl() {
     try {
       await publishResults();
       setResultsPublished(true);
-      alert("Results published successfully!");
+
+      const resultsLink = `${window.location.origin}/results`;
+      const { sent, failed, total, failedReasons } = await sendResultsAnnouncementEmails(resultsLink);
+
+      if (failed > 0) {
+        alert(
+          `Results published successfully! Email summary: ${sent}/${total} sent, ${failed} failed.${
+            failedReasons?.[0] ? `\nFirst error: ${failedReasons[0]}` : ""
+          }`
+        );
+      } else {
+        alert(`Results published and email sent to ${sent} voters.`);
+      }
     } catch (err) {
       setError(err.message);
     }
