@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { getElectionStatus } from "../services/electionService";
 import ElectionTimer from "../components/ElectionTimer";
 
 export default function StartVoting() {
@@ -12,6 +11,8 @@ export default function StartVoting() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let unsubscribeElection = null;
+
     const checkUserStatus = async () => {
       const user = auth.currentUser;
       if (!user) {
@@ -47,17 +48,34 @@ export default function StartVoting() {
         return;
       }
 
-      // Check election status
-      try {
-        const electionData = await getElectionStatus();
-        setElectionStatus(electionData.electionStatus);
-      } catch (error) {
-        console.error("Error fetching election status:", error);
-      }
-      setCheckingStatus(false);
+      // Listen to election status in real-time
+      const electionDocRef = doc(db, "settings", "election");
+      unsubscribeElection = onSnapshot(
+        electionDocRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const electionData = docSnap.data();
+            setElectionStatus(electionData.electionStatus || "not_started");
+          } else {
+            setElectionStatus("not_started");
+          }
+          setCheckingStatus(false);
+        },
+        (error) => {
+          console.error("Error listening to election status:", error);
+          setElectionStatus("not_started");
+          setCheckingStatus(false);
+        }
+      );
     };
 
     checkUserStatus();
+
+    return () => {
+      if (unsubscribeElection) {
+        unsubscribeElection();
+      }
+    };
   }, [navigate]);
 
   const handleStartVoting = async () => {

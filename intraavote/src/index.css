@@ -10,7 +10,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-font-smoothing: graysc ale;
   
   /* CSS Variables for consistent sizing */
   --container-max-width: 1280px;
@@ -135,7 +135,7 @@ button:focus-visible {
   justify-content: center;
   min-height: 100vh;
   width: 100%;
-  box-sizing: border-box;
+  box-sizing: border-box; 
   padding: 2rem;
 }
 
@@ -144,7 +144,7 @@ button:focus-visible {
   padding: 2rem;
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(95, 79, 79, 0.88);
   box-shadow: 0 30px 70px rgba(18, 57, 96, 0.14);
   backdrop-filter: blur(24px);
 }
