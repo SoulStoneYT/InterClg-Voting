@@ -11,7 +11,8 @@ import useNotification from "../hooks/useNotification";
 
 const adminEmails = [
   "adityachaudhari237@nhitm.ac.in",
-  "friend1@nhitm.ac.in"
+  "friend1@nhitm.ac.in",
+  "user4@nhitm.ac.in"
   
 ];
 
